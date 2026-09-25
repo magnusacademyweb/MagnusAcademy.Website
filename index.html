@@ -36,6 +36,223 @@
     font-weight: 700;
     letter-spacing: .02em;
   }
+  .courses-section {
+    width: min(1120px, calc(100% - 40px));
+    margin: 20px auto 0;
+    padding: 58px 0 0;
+    scroll-margin-top: 24px;
+  }
+  .courses-heading {
+    max-width: 610px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .courses-eyebrow {
+    margin: 0 0 12px;
+    color: var(--blue, #1689fe);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  .courses-heading h2 {
+    margin: 0;
+    color: var(--ink, #10213b);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: -.06em;
+    line-height: 1.05;
+  }
+  .courses-intro {
+    max-width: 540px;
+    margin: 16px auto 0;
+    color: var(--muted, rgba(16,33,59,.62));
+    font-size: .88rem;
+    line-height: 1.7;
+  }
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 38px;
+  }
+  .course-card {
+    position: relative;
+    min-height: 455px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    overflow: hidden;
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    border-radius: 24px;
+    background: var(--surface, rgba(255,255,255,.74));
+    box-shadow: var(--shadow, 0 22px 60px rgba(36,78,130,.12));
+    color: var(--ink, #10213b);
+    text-decoration: none;
+    text-align: left;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .course-card:hover,
+  .course-card:focus-within {
+    transform: translateY(-5px);
+    border-color: var(--cyan, #16b9dc);
+    box-shadow: 0 24px 68px rgba(36,78,130,.2);
+  }
+  .course-card::before {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    right: -48px;
+    top: -42px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.27);
+    filter: blur(2px);
+  }
+  .course-card.jeem { background: linear-gradient(145deg, rgba(116,232,255,.3), var(--solid, rgba(255,255,255,.74)) 72%); }
+  .course-card.neet { background: linear-gradient(145deg, rgba(196,165,255,.3), var(--solid, rgba(255,255,255,.74)) 72%); }
+  .course-card.cbse { background: linear-gradient(145deg, rgba(255,208,130,.3), var(--solid, rgba(255,255,255,.74)) 72%); }
+  .course-card.foundation { background: linear-gradient(145deg, rgba(117,184,255,.3), var(--solid, rgba(255,255,255,.74)) 72%); }
+  html[data-theme="dark"] .course-card.jeem,
+  html[data-theme="dark"] .course-card.neet,
+  html[data-theme="dark"] .course-card.cbse,
+  html[data-theme="dark"] .course-card.foundation {
+    background: linear-gradient(145deg, rgba(40,74,110,.62), var(--solid, #10213b) 75%);
+  }
+  .course-card .card-top,
+  .course-card .card-body,
+  .course-card .card-bottom {
+    position: relative;
+    z-index: 1;
+  }
+  .course-card .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .course-card .tag {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.45);
+    color: var(--ink, #10213b);
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .course-card .number {
+    color: var(--muted, rgba(16,33,59,.62));
+    font: 800 clamp(2rem, 4vw, 3.2rem)/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: -.12em;
+    opacity: .42;
+  }
+  .course-card .card-body { margin-top: 58px; }
+  .course-card h3 {
+    margin: 0;
+    color: var(--ink, #10213b);
+    font-size: 1.7rem;
+    letter-spacing: -.05em;
+    line-height: 1.1;
+  }
+  .course-card .course-audience {
+    margin: 0 0 12px;
+    color: var(--blue, #1689fe);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .course-copy {
+    margin: 14px 0 0;
+    color: var(--muted, rgba(16,33,59,.62));
+    font-size: .8rem;
+    line-height: 1.7;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 20px;
+  }
+  .chip {
+    padding: 7px 9px;
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    border-radius: 9px;
+    background: rgba(255,255,255,.3);
+    color: var(--muted, rgba(16,33,59,.62));
+    font-size: .61rem;
+    font-weight: 800;
+  }
+  .course-card .card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--line, rgba(20,55,100,.14));
+  }
+  .course-card .card-bottom span:first-child {
+    color: var(--ink, #10213b);
+    font-size: .67rem;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+  .course-card .card-bottom span:last-child {
+    white-space: nowrap;
+  }
+  .course-card .arrow {
+    color: var(--blue, #1689fe);
+    font-size: 1.2rem;
+    transition: transform .25s ease;
+  }
+  .course-card:hover .arrow,
+  .course-card:focus-within .arrow { transform: translate(3px, -3px); }
+  .course-promise {
+    display: grid;
+    grid-template-columns: .8fr 1.2fr;
+    gap: 20px;
+    margin-top: 18px;
+    padding: 30px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 24px;
+    color: #fff;
+    background: #0b1833;
+  }
+  .course-promise h3 {
+    max-width: 390px;
+    margin: 12px 0 0;
+    color: #fff;
+    font-size: 1.8rem;
+    letter-spacing: -.05em;
+    line-height: 1.1;
+  }
+  .course-promise p {
+    max-width: 560px;
+    margin: 14px 0 0;
+    color: rgba(255,255,255,.63);
+    font-size: .82rem;
+    line-height: 1.8;
+  }
+  .course-promise .promise-eyebrow {
+    color: #74e8ff;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+  .promise-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    align-content: center;
+  }
+  .promise-list div {
+    padding: 17px 0;
+    border-top: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.78);
+    font-size: .76rem;
+    font-weight: 700;
+  }
   .contact-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -98,7 +315,15 @@
     .contact-section { width: min(100% - 28px, 520px); margin-top: 12px; padding-top: 28px; }
     .contact-grid { grid-template-columns: 1fr; gap: 12px; }
     .contact-card { min-height: 175px; }
+    .courses-section { width: min(100% - 28px, 520px); margin-top: 12px; padding-top: 36px; }
+    .course-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+    .course-card { min-height: 390px; }
+    .course-promise { grid-template-columns: 1fr; padding: 24px; }
+    .promise-list { grid-template-columns: 1fr; }
     .site-footer { width: min(100% - 28px, 520px); flex-direction: column; gap: 8px; }
+  }
+  @media (min-width: 761px) and (max-width: 1120px) {
+    .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>
 </head>
@@ -126,7 +351,7 @@
 
     <div class="nav-links">
       <a href="about.html">About</a>
-      <a href="courses.html">Courses</a>
+      <a href="#courses">Courses</a>
       <a href="faculty.html">Faculty</a>
       <a href="results.html">Results</a>
       <a href="#contact">Contact</a>
@@ -143,12 +368,80 @@
       <p>Live doubt-clearing, personalised mark tracking, and a faculty team built around one goal — your rank.</p>
       <div class="cta-row">
         <a class="btn-primary" href="about.html">About <span class="arrow">↗</span></a>
-        <a class="btn-secondary" href="courses.html">Courses</a>
+        <a class="btn-secondary" href="#courses">Courses</a>
       </div>
     </div>
 
   </div>
 </div>
+
+<section class="courses-section" id="courses" aria-labelledby="courses-title">
+  <div class="courses-heading">
+    <p class="courses-eyebrow">Find your next move</p>
+    <h2 id="courses-title">The right track changes everything.</h2>
+    <p class="courses-intro">Focused learning paths for the exam you’re preparing for now — and the future you’re building toward.</p>
+  </div>
+
+  <div class="course-grid" aria-label="Magnus courses">
+    <a class="course-card jeem" href="courses.html" aria-label="View detailed information about The Rank Track">
+      <div class="card-top"><span class="tag">JEE · 2026</span><span class="number">01</span></div>
+      <div class="card-body">
+        <p class="course-audience">For ambitious problem-solvers</p>
+        <h3>Build your rank.</h3>
+        <p class="course-copy">A focused JEE path that turns difficult concepts into a weekly rhythm you can actually follow.</p>
+        <div class="chips"><span class="chip">Main + Advanced</span><span class="chip">Weekly mocks</span></div>
+      </div>
+      <div class="card-bottom"><span>See the full track</span><span class="arrow">↗</span></div>
+    </a>
+
+    <a class="course-card neet" href="courses.html" aria-label="View detailed information about The Med Track">
+      <div class="card-top"><span class="tag">NEET · 2026</span><span class="number">02</span></div>
+      <div class="card-body">
+        <p class="course-audience">For future doctors</p>
+        <h3>Make the climb calmer.</h3>
+        <p class="course-copy">A clear NEET routine for stronger recall, sharper problem solving, and steady progress toward medical college.</p>
+        <div class="chips"><span class="chip">NCERT-first</span><span class="chip">Doubt desk</span></div>
+      </div>
+      <div class="card-bottom"><span>See the full track</span><span class="arrow">↗</span></div>
+    </a>
+
+    <a class="course-card cbse" href="courses.html" aria-label="View detailed information about The Boards Track">
+      <div class="card-top"><span class="tag">CBSE Boards · 2026</span><span class="number">03</span></div>
+      <div class="card-body">
+        <p class="course-audience">For confident board performance</p>
+        <h3>Make every mark count.</h3>
+        <p class="course-copy">Clear teaching, smart revision, and answer-writing practice built around the way CBSE rewards marks.</p>
+        <div class="chips"><span class="chip">Class 10 + 12</span><span class="chip">Sample papers</span></div>
+      </div>
+      <div class="card-bottom"><span>See the full track</span><span class="arrow">↗</span></div>
+    </a>
+
+    <a class="course-card foundation" href="courses.html" aria-label="View detailed information about The Foundation">
+      <div class="card-top"><span class="tag">Foundation · Grades 6–9</span><span class="number">04</span></div>
+      <div class="card-body">
+        <p class="course-audience">For strong beginnings</p>
+        <h3>Start with the fundamentals.</h3>
+        <p class="course-copy">Build the concepts, confidence, and study habits that make higher-grade learning feel less overwhelming.</p>
+        <div class="chips"><span class="chip">Grades 6–9</span><span class="chip">Mentor check-ins</span></div>
+      </div>
+      <div class="card-bottom"><span>See the full track</span><span class="arrow">↗</span></div>
+    </a>
+  </div>
+
+  <section class="course-promise" aria-label="What every course includes">
+    <div>
+      <div class="promise-eyebrow">Inside every track</div>
+      <h3>A command center, not a content dump.</h3>
+      <p>Every course connects lessons, practice, doubt clearing, and score review into one weekly rhythm that tells you what to do next.</p>
+    </div>
+    <div class="promise-list">
+      <div>Live concept rooms</div>
+      <div>Personal score map</div>
+      <div>Daily doubt desk</div>
+      <div>Full-length mocks</div>
+    </div>
+  </section>
+</section>
 
 <section class="contact-section" id="contact" aria-labelledby="contact-title">
   <p class="contact-kicker" id="contact-title">We’re here to help and answer any questions you might have.</p>
