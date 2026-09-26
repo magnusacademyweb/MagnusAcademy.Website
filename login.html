@@ -78,7 +78,7 @@
   <div id="staffView" class="portal-card hidden">
     <h2>Staff Upload</h2>
     <p id="staffGreeting"></p>
-    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, exam_name, exam_date, Physics, Chemistry, Maths, Biology, max_marks</code>. Leave a subject blank if the student didn't take it.</p>
+    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry.</p>
     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
     <button class="portal-btn" id="uploadBtn" style="margin-top:12px;">Upload Marks</button>
     <div id="uploadStatus"></div>
@@ -264,18 +264,19 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
       const rollNumber = String(r.roll_number).trim();
       const examName = r.exam_name;
       const examDate = toISODate(r.exam_date);
-      const maxMarks = Number(r.max_marks);
 
       SUBJECT_COLUMNS.forEach(subject => {
         const raw = r[subject];
         if (raw === undefined || raw === null || raw === '') return; // subject not taken — skip
+        const maxCol = subject + ' Max';
+        const maxRaw = r[maxCol];
         records.push({
           roll_number: rollNumber,
           subject: subject,
           exam_name: examName,
           exam_date: examDate,
           marks_obtained: Number(raw),
-          max_marks: maxMarks
+          max_marks: maxRaw !== undefined && maxRaw !== null && maxRaw !== '' ? Number(maxRaw) : 100
         });
       });
     });
