@@ -115,6 +115,14 @@ function normalizeEmail(raw) {
   return String(raw).trim().toLowerCase();
 }
 
+// Same idea as roll numbers: "Term 1", "Term 1 ", and "term 1" should all be treated as
+// the same exam for duplicate-detection purposes, not three different ones. We only trim
+// and collapse whitespace here (not force lowercase) since exam names are also displayed
+// as-typed, so keep casing consistent when you type it across uploads.
+function normalizeExamName(raw) {
+  return String(raw).trim().replace(/\s+/g, ' ');
+}
+
 let isSignup = false;
 
 const authView = document.getElementById('authView');
@@ -406,7 +414,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
     const records = [];
     nonBlankRows.forEach(r => {
       const rollNumber = normalizeRoll(r.roll_number);
-      const examName = r.exam_name;
+      const examName = normalizeExamName(r.exam_name);
       const examDate = toISODate(r.exam_date);
 
       SUBJECT_COLUMNS.forEach(subject => {
@@ -439,7 +447,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (existingMarksErr) { status.textContent = 'Could not check existing marks: ' + existingMarksErr.message; return; }
 
-    const keyOf = (r) => `${r.roll_number}|${r.subject}|${r.exam_name}|${r.exam_date}`;
+    const keyOf = (r) => `${r.roll_number}|${r.subject}|${normalizeExamName(r.exam_name)}|${r.exam_date}`;
     const existingKeys = new Set((existingMarks || []).map(keyOf));
     const duplicateCount = records.filter(r => existingKeys.has(keyOf(r))).length;
 
