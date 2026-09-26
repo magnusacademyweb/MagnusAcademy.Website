@@ -309,15 +309,29 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     const rows = rawRows.map(normalizeRow);
 
-    const rowsMissingRoll = rows.filter(r => r.roll_number === undefined || r.roll_number === null || String(r.roll_number).trim() === '');
+    // A row counts as "blank" (leftover template row) if it has no roll number, no name,
+    // and no subject marks filled in. We deliberately ignore columns like "S.No" or the
+    // "Subject Max" columns here, since template sheets often carry formulas in those cells
+    // on every row (even unused ones), which would otherwise make every row look "filled in".
+    function isBlankRow(r) {
+      const meaningfulEmpty = (v) => v === undefined || v === null || String(v).trim() === '';
+      if (!meaningfulEmpty(r.roll_number)) return false;
+      if (!meaningfulEmpty(r.full_name)) return false;
+      return SUBJECT_COLUMNS.every(subject => meaningfulEmpty(r[subject]));
+    }
+    const nonBlankRows = rows.filter(r => !isBlankRow(r));
+
+    const rowsMissingRoll = nonBlankRows.filter(r => r.roll_number === undefined || r.roll_number === null || String(r.roll_number).trim() === '');
     if (rowsMissingRoll.length) {
-      status.textContent = `${rowsMissingRoll.length} row(s) have no recognizable roll number column. Check your sheet's header spelling.`;
+      status.textContent = `${rowsMissingRoll.length} row(s) have data but no roll number. Check your sheet's header spelling or fill in the missing roll number(s).`;
       return;
     }
 
+    if (!nonBlankRows.length) { status.textContent = 'No filled-in rows found in file.'; return; }
+
     // Build a roll_number -> {full_name, class} map straight from the sheet
     const rollInfo = {};
-    rows.forEach(r => {
+    nonBlankRows.forEach(r => {
       const rollNumber = String(r.roll_number).trim();
       if (!rollInfo[rollNumber]) {
         rollInfo[rollNumber] = {
@@ -364,7 +378,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     // Now build and insert the marks rows
     const records = [];
-    rows.forEach(r => {
+    nonBlankRows.forEach(r => {
       const rollNumber = String(r.roll_number).trim();
       const examName = r.exam_name;
       const examDate = toISODate(r.exam_date);
