@@ -96,6 +96,18 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Every roll number, wherever it comes from (signup form or an uploaded sheet), goes
+// through this before it's used to look up, insert, or compare against a student.
+// Without this, "001", " 001", and "001 " would be treated as three different students.
+function normalizeRoll(raw) {
+  const trimmed = String(raw).trim().toUpperCase();
+  // Roll numbers here are purely numeric — pad to 3 digits so "1", "01", "001" all match as "001".
+  if (/^\d+$/.test(trimmed)) {
+    return trimmed.padStart(3, '0');
+  }
+  return trimmed;
+}
+
 let isSignup = false;
 
 const authView = document.getElementById('authView');
@@ -148,7 +160,7 @@ authSubmitBtn.addEventListener('click', async () => {
   }
 
   if (isSignup) {
-    const enteredRoll = document.getElementById('rollNumberInput').value.trim();
+    const enteredRoll = normalizeRoll(document.getElementById('rollNumberInput').value.trim());
     const enteredName = document.getElementById('fullNameInput').value.trim();
     const enteredClass = document.getElementById('classInput').value.trim();
 
@@ -226,7 +238,7 @@ async function routeAfterAuth(enteredRoll) {
 
   if (studentRow) {
     // If this was a signup (enteredRoll is not null), the roll number must match too
-    if (enteredRoll !== null && enteredRoll !== studentRow.roll_number) {
+    if (enteredRoll !== null && enteredRoll !== normalizeRoll(studentRow.roll_number)) {
       await supabaseClient.auth.signOut();
       hideAll();
       authView.classList.remove('hidden');
@@ -332,7 +344,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
     // Build a roll_number -> {full_name, class} map straight from the sheet
     const rollInfo = {};
     nonBlankRows.forEach(r => {
-      const rollNumber = String(r.roll_number).trim();
+      const rollNumber = normalizeRoll(r.roll_number);
       if (!rollInfo[rollNumber]) {
         rollInfo[rollNumber] = {
           full_name: r.full_name ? String(r.full_name).trim() : null,
@@ -351,7 +363,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (fetchErr) { status.textContent = 'Could not check existing students: ' + fetchErr.message; return; }
 
-    const existingSet = new Set((existingStudents || []).map(s => s.roll_number));
+    const existingSet = new Set((existingStudents || []).map(s => normalizeRoll(s.roll_number)));
     const missing = rollNumbers.filter(rn => !existingSet.has(rn));
 
     if (missing.length) {
@@ -379,7 +391,7 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
     // Now build and insert the marks rows
     const records = [];
     nonBlankRows.forEach(r => {
-      const rollNumber = String(r.roll_number).trim();
+      const rollNumber = normalizeRoll(r.roll_number);
       const examName = r.exam_name;
       const examDate = toISODate(r.exam_date);
 
