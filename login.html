@@ -259,6 +259,40 @@ function toISODate(raw){
 // One column per subject in the sheet — each becomes its own row in the database
 const SUBJECT_COLUMNS = ['Physics', 'Chemistry', 'Maths', 'Biology'];
 
+// Maps a bunch of header spellings/variants to the canonical key we use in code.
+// Key = normalized header (lowercase, letters+digits only), Value = canonical field name.
+const HEADER_ALIASES = {
+  'rollnumber': 'roll_number', 'rollno': 'roll_number', 'rollnum': 'roll_number', 'roll': 'roll_number',
+  'fullname': 'full_name', 'name': 'full_name', 'studentname': 'full_name',
+  'class': 'class', 'batch': 'class', 'section': 'class',
+  'examname': 'exam_name', 'exam': 'exam_name',
+  'examdate': 'exam_date', 'date': 'exam_date',
+  'physics': 'Physics', 'physicsmax': 'Physics Max',
+  'chemistry': 'Chemistry', 'chemistrymax': 'Chemistry Max',
+  'maths': 'Maths', 'math': 'Maths', 'mathematics': 'Maths', 'mathsmax': 'Maths Max', 'mathmax': 'Maths Max',
+  'biology': 'Biology', 'biologymax': 'Biology Max'
+};
+
+function normalizeKey(key) {
+  return String(key).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Rewrites each row's keys from whatever the sheet used to our canonical field names,
+// so header spelling/spacing/case differences don't silently produce undefined values.
+function normalizeRow(row) {
+  const out = {};
+  Object.keys(row).forEach(rawKey => {
+    const norm = normalizeKey(rawKey);
+    const canonical = HEADER_ALIASES[norm];
+    if (canonical) {
+      out[canonical] = row[rawKey];
+    } else if (!(rawKey in out)) {
+      out[rawKey] = row[rawKey]; // unknown column — keep as-is, harmless
+    }
+  });
+  return out;
+}
+
 document.getElementById('uploadBtn').addEventListener('click', () => {
   const fileInput = document.getElementById('fileInput');
   const status = document.getElementById('uploadStatus');
@@ -269,9 +303,17 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
   reader.onload = async (e) => {
     const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
     const sheet = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const rawRows = XLSX.utils.sheet_to_json(sheet);
 
-    if (!rows.length) { status.textContent = 'No rows found in file.'; return; }
+    if (!rawRows.length) { status.textContent = 'No rows found in file.'; return; }
+
+    const rows = rawRows.map(normalizeRow);
+
+    const rowsMissingRoll = rows.filter(r => r.roll_number === undefined || r.roll_number === null || String(r.roll_number).trim() === '');
+    if (rowsMissingRoll.length) {
+      status.textContent = `${rowsMissingRoll.length} row(s) have no recognizable roll number column. Check your sheet's header spelling.`;
+      return;
+    }
 
     // Build a roll_number -> {full_name, class} map straight from the sheet
     const rollInfo = {};
