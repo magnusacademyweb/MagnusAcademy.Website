@@ -78,7 +78,7 @@
   <div id="staffView" class="portal-card hidden">
     <h2>Staff Upload</h2>
     <p id="staffGreeting"></p>
-    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry.</p>
+    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, full_name, class, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry. If a roll number isn't already registered, it will be auto-created using the <code>full_name</code> and <code>class</code> columns — <code>full_name</code> is required for any new roll number.</p>
     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
     <button class="portal-btn" id="uploadBtn" style="margin-top:12px;">Upload Marks</button>
     <div id="uploadStatus"></div>
@@ -156,18 +156,32 @@ authSubmitBtn.addEventListener('click', async () => {
     if (error) { showMsg(error.message, 'error'); return; }
 
     if (enteredRoll) {
-      // Student self-registration: create their row now
+      // Student self-registration: link to an existing (possibly auto-created) row,
+      // or create a new one — never a plain insert, since a staff marks upload
+      // may have already created this roll_number with no email yet.
       if (!enteredName) { showMsg('Please enter your full name.', 'error'); return; }
-      const { error: insertError } = await supabaseClient
-        .from('students')
-        .insert({ roll_number: enteredRoll, full_name: enteredName, email: email, class: enteredClass || null });
 
-      if (insertError) {
-        if (insertError.message.includes('duplicate') || insertError.code === '23505') {
-          showMsg('That roll number is already registered. If this is a mistake, contact the office.', 'error');
-        } else {
-          showMsg('Could not create your student record: ' + insertError.message, 'error');
-        }
+      const { data: existing } = await supabaseClient
+        .from('students')
+        .select('email')
+        .eq('roll_number', enteredRoll)
+        .maybeSingle();
+
+      if (existing && existing.email) {
+        showMsg('That roll number is already registered. If this is a mistake, contact the office.', 'error');
+        await supabaseClient.auth.signOut();
+        return;
+      }
+
+      const { error: upsertError } = await supabaseClient
+        .from('students')
+        .upsert(
+          { roll_number: enteredRoll, full_name: enteredName, email: email, class: enteredClass || null },
+          { onConflict: 'roll_number' }
+        );
+
+      if (upsertError) {
+        showMsg('Could not create your student record: ' + upsertError.message, 'error');
         await supabaseClient.auth.signOut();
         return;
       }
@@ -259,6 +273,54 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (!rows.length) { status.textContent = 'No rows found in file.'; return; }
 
+    // Build a roll_number -> {full_name, class} map straight from the sheet
+    const rollInfo = {};
+    rows.forEach(r => {
+      const rollNumber = String(r.roll_number).trim();
+      if (!rollInfo[rollNumber]) {
+        rollInfo[rollNumber] = {
+          full_name: r.full_name ? String(r.full_name).trim() : null,
+          class: r.class ? String(r.class).trim() : null
+        };
+      }
+    });
+    const rollNumbers = Object.keys(rollInfo);
+
+    status.textContent = 'Checking students...';
+
+    const { data: existingStudents, error: fetchErr } = await supabaseClient
+      .from('students')
+      .select('roll_number')
+      .in('roll_number', rollNumbers);
+
+    if (fetchErr) { status.textContent = 'Could not check existing students: ' + fetchErr.message; return; }
+
+    const existingSet = new Set((existingStudents || []).map(s => s.roll_number));
+    const missing = rollNumbers.filter(rn => !existingSet.has(rn));
+
+    if (missing.length) {
+      const missingNoName = missing.filter(rn => !rollInfo[rn].full_name);
+      if (missingNoName.length) {
+        status.textContent = `Cannot auto-register: add a "full_name" column for new roll number(s): ${missingNoName.join(', ')}`;
+        return;
+      }
+
+      const newStudents = missing.map(rn => ({
+        roll_number: rn,
+        full_name: rollInfo[rn].full_name,
+        class: rollInfo[rn].class || null,
+        email: null
+      }));
+
+      status.textContent = `Registering ${newStudents.length} new student(s)...`;
+      const { error: insertStudentsErr } = await supabaseClient.from('students').insert(newStudents);
+      if (insertStudentsErr) {
+        status.textContent = 'Could not auto-register new students: ' + insertStudentsErr.message;
+        return;
+      }
+    }
+
+    // Now build and insert the marks rows
     const records = [];
     rows.forEach(r => {
       const rollNumber = String(r.roll_number).trim();
@@ -283,12 +345,12 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (!records.length) { status.textContent = 'No subject marks found in file.'; return; }
 
-    status.textContent = `Uploading ${records.length} rows...`;
+    status.textContent = `Uploading ${records.length} mark rows...`;
     const { error } = await supabaseClient.from('marks').insert(records);
     if (error) {
       status.textContent = 'Upload failed: ' + error.message;
     } else {
-      status.textContent = `Successfully uploaded ${records.length} rows.`;
+      status.textContent = `Done — ${missing.length} new student(s) registered, ${records.length} mark rows uploaded.`;
     }
   };
   reader.readAsBinaryString(file);
