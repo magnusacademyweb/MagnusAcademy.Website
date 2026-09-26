@@ -78,7 +78,7 @@
   <div id="staffView" class="portal-card hidden">
     <h2>Staff Upload</h2>
     <p id="staffGreeting"></p>
-    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, full_name, class, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry. If a roll number isn't already registered, it will be auto-created using the <code>full_name</code> and <code>class</code> columns — <code>full_name</code> is required for any new roll number.</p>
+    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, full_name, class, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. <code>exam_date</code> is required for every row. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry. If a roll number isn't already registered, it will be auto-created using the <code>full_name</code> and <code>class</code> columns — <code>full_name</code> is required for any new roll number. If an entry for the same student/subject/exam/date already exists, you'll be asked to confirm before it's overwritten.</p>
     <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
     <button class="portal-btn" id="uploadBtn" style="margin-top:12px;">Upload Marks</button>
     <div id="uploadStatus"></div>
@@ -106,6 +106,13 @@ function normalizeRoll(raw) {
     return trimmed.padStart(3, '0');
   }
   return trimmed;
+}
+
+// Emails are matched case-insensitively too, but NOT via .ilike() — ilike treats "_" and "%"
+// inside the pattern as wildcards, so an email like "john_doe@gmail.com" could match the
+// wrong row. Normalizing to lowercase on both write and read and using .eq() avoids that.
+function normalizeEmail(raw) {
+  return String(raw).trim().toLowerCase();
 }
 
 let isSignup = false;
@@ -150,7 +157,7 @@ function handleToggleClick() {
 toggleLink.addEventListener('click', handleToggleClick);
 
 authSubmitBtn.addEventListener('click', async () => {
-  const email = document.getElementById('emailInput').value.trim();
+  const email = normalizeEmail(document.getElementById('emailInput').value);
   const password = document.getElementById('passwordInput').value;
   clearMsg();
 
@@ -214,12 +221,13 @@ authSubmitBtn.addEventListener('click', async () => {
 async function routeAfterAuth(enteredRoll) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return;
+  const userEmail = normalizeEmail(user.email);
 
   // Check admins table first (staff don't need a roll number)
   const { data: adminRow } = await supabaseClient
     .from('admins')
     .select('*')
-    .ilike('email', user.email)
+    .eq('email', userEmail)
     .maybeSingle();
 
   if (adminRow) {
@@ -233,7 +241,7 @@ async function routeAfterAuth(enteredRoll) {
   const { data: studentRow } = await supabaseClient
     .from('students')
     .select('*')
-    .ilike('email', user.email)
+    .eq('email', userEmail)
     .maybeSingle();
 
   if (studentRow) {
@@ -341,6 +349,12 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (!nonBlankRows.length) { status.textContent = 'No filled-in rows found in file.'; return; }
 
+    const rowsMissingDate = nonBlankRows.filter(r => r.exam_date === undefined || r.exam_date === null || String(r.exam_date).trim() === '');
+    if (rowsMissingDate.length) {
+      status.textContent = `${rowsMissingDate.length} row(s) are missing an exam date. exam_date is required for every row.`;
+      return;
+    }
+
     // Build a roll_number -> {full_name, class} map straight from the sheet
     const rollInfo = {};
     nonBlankRows.forEach(r => {
@@ -413,12 +427,37 @@ document.getElementById('uploadBtn').addEventListener('click', () => {
 
     if (!records.length) { status.textContent = 'No subject marks found in file.'; return; }
 
+    // Check whether any of these exact (roll_number, subject, exam_name, exam_date)
+    // combinations already have a mark on file — those would be silently overwritten.
+    status.textContent = 'Checking for existing entries...';
+    const distinctExamNames = [...new Set(records.map(r => r.exam_name))];
+    const { data: existingMarks, error: existingMarksErr } = await supabaseClient
+      .from('marks')
+      .select('roll_number, subject, exam_name, exam_date')
+      .in('roll_number', rollNumbers)
+      .in('exam_name', distinctExamNames);
+
+    if (existingMarksErr) { status.textContent = 'Could not check existing marks: ' + existingMarksErr.message; return; }
+
+    const keyOf = (r) => `${r.roll_number}|${r.subject}|${r.exam_name}|${r.exam_date}`;
+    const existingKeys = new Set((existingMarks || []).map(keyOf));
+    const duplicateCount = records.filter(r => existingKeys.has(keyOf(r))).length;
+
+    if (duplicateCount > 0) {
+      const proceed = window.confirm(
+        `${duplicateCount} mark entry(ies) in this upload already exist on file and will be overwritten with the new values. Continue?`
+      );
+      if (!proceed) { status.textContent = 'Upload cancelled — no changes made.'; return; }
+    }
+
     status.textContent = `Uploading ${records.length} mark rows...`;
-    const { error } = await supabaseClient.from('marks').insert(records);
+    const { error } = await supabaseClient
+      .from('marks')
+      .upsert(records, { onConflict: 'roll_number,subject,exam_name,exam_date' });
     if (error) {
       status.textContent = 'Upload failed: ' + error.message;
     } else {
-      status.textContent = `Done — ${missing.length} new student(s) registered, ${records.length} mark rows uploaded.`;
+      status.textContent = `Done — ${missing.length} new student(s) registered, ${records.length} mark rows uploaded (${duplicateCount} overwritten).`;
     }
   };
   reader.readAsBinaryString(file);
