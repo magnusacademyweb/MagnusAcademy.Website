@@ -400,17 +400,34 @@ authSubmitBtn.addEventListener('click', async () => {
         return;
       }
 
-      const { error: upsertError } = await supabaseClient
+      // Try to attach to an existing unclaimed row first (created by a staff marks
+      // upload). We use an explicit UPDATE rather than .upsert()/ON CONFLICT — RLS
+      // interaction with ON CONFLICT DO UPDATE is harder to reason about and debug
+      // than a plain, explicit UPDATE-then-INSERT flow.
+      const { data: updatedRows, error: updateError } = await supabaseClient
         .from('students')
-        .upsert(
-          { roll_number: enteredRoll, full_name: enteredName, email: email, class: enteredClass || null },
-          { onConflict: 'roll_number' }
-        );
+        .update({ full_name: enteredName, email: email, class: enteredClass || null })
+        .eq('roll_number', enteredRoll)
+        .is('email', null)
+        .select();
 
-      if (upsertError) {
-        showMsg('Could not create your student record: ' + upsertError.message, 'error');
+      if (updateError) {
+        showMsg('Could not create your student record: ' + updateError.message, 'error');
         await supabaseClient.auth.signOut();
         return;
+      }
+
+      if (!updatedRows || updatedRows.length === 0) {
+        // No unclaimed row existed for this roll number — create a fresh one.
+        const { error: insertError } = await supabaseClient
+          .from('students')
+          .insert({ roll_number: enteredRoll, full_name: enteredName, email: email, class: enteredClass || null });
+
+        if (insertError) {
+          showMsg('Could not create your student record: ' + insertError.message, 'error');
+          await supabaseClient.auth.signOut();
+          return;
+        }
       }
       showMsg('Account created!', 'success');
       await routeAfterAuth(enteredRoll);
