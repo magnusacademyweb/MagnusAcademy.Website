@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,90 +9,287 @@
 <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .portal-wrap { max-width: 480px; margin: 60px auto; padding: 32px; }
-  .portal-card { border: 1px solid #ddd; border-radius: 12px; padding: 28px; }
-  .portal-card h2 { margin-top: 0; }
-  .portal-field { margin-bottom: 14px; }
-  .portal-field label { display: block; font-size: 0.9em; margin-bottom: 4px; }
-  .portal-field input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-  .portal-btn { width: 100%; padding: 12px; border-radius: 6px; border: none; background: #1a1a2e; color: #fff; cursor: pointer; font-weight: 600; }
-  .portal-toggle { text-align: center; margin-top: 14px; font-size: 0.9em; }
-  .portal-toggle a { cursor: pointer; text-decoration: underline; }
-  .portal-msg { padding: 10px; border-radius: 6px; margin-bottom: 14px; font-size: 0.9em; }
-  .portal-msg.error { background: #fdecea; color: #a33; }
-  .portal-msg.success { background: #eaf7ea; color: #2a7; }
-  table.marks-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-  table.marks-table th, table.marks-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9em; }
-  #uploadStatus { margin-top: 10px; font-size: 0.9em; }
-  .hidden { display: none; }
+  /* ---- Portal-specific layout, built on top of the site's shared design tokens ---- */
+  .portal-main { padding-bottom: 80px; }
+  .portal-intro { max-width: 560px; }
+  .portal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    margin-top: 52px;
+  }
+  .portal-wrap { width: min(460px, 100%); }
+
+  .portal-card {
+    padding: 34px;
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    border-radius: 26px;
+    background: var(--surface, rgba(255,255,255,.74));
+    box-shadow: var(--shadow, 0 22px 60px rgba(36,78,130,.12));
+    backdrop-filter: blur(18px);
+  }
+  .portal-card h2 {
+    margin: 0 0 6px;
+    color: var(--ink, #10213b);
+    font-size: 1.5rem;
+    letter-spacing: -.03em;
+  }
+  .portal-card-sub {
+    margin: 0 0 26px;
+    color: var(--muted, rgba(16,33,59,.62));
+    font-size: .82rem;
+    line-height: 1.6;
+  }
+
+  .portal-field { margin-bottom: 16px; }
+  .portal-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink, #10213b);
+    font-size: .76rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .portal-field label span { color: var(--muted, rgba(16,33,59,.62)); font-weight: 500; }
+  .portal-field input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    border-radius: 12px;
+    background: rgba(255,255,255,.55);
+    color: var(--ink, #10213b);
+    font: 500 .9rem 'Manrope', sans-serif;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  html[data-theme="dark"] .portal-field input { background: rgba(255,255,255,.06); }
+  .portal-field input::placeholder { color: var(--muted, rgba(16,33,59,.4)); }
+  .portal-field input:focus {
+    outline: none;
+    border-color: var(--cyan, #16b9dc);
+    box-shadow: 0 0 0 4px rgba(22,185,220,.14);
+    background: rgba(255,255,255,.9);
+  }
+  html[data-theme="dark"] .portal-field input:focus { background: rgba(255,255,255,.1); }
+
+  .portal-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--blue, #1689fe), var(--cyan, #16b9dc));
+    color: #fff;
+    font: 800 .84rem 'Manrope', sans-serif;
+    letter-spacing: -.01em;
+    cursor: pointer;
+    box-shadow: 0 14px 30px rgba(22,137,254,.28);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .portal-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 38px rgba(22,137,254,.36); }
+  .portal-btn:active { transform: translateY(0); }
+  .portal-btn.secondary {
+    background: transparent;
+    color: var(--ink, #10213b);
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    box-shadow: none;
+  }
+  .portal-btn.secondary:hover { border-color: var(--cyan, #16b9dc); box-shadow: none; }
+
+  .portal-toggle { margin-top: 18px; color: var(--muted, rgba(16,33,59,.62)); font-size: .82rem; text-align: center; }
+  .portal-toggle a { color: var(--blue, #1689fe); font-weight: 700; text-decoration: none; cursor: pointer; }
+  .portal-toggle a:hover { text-decoration: underline; }
+
+  .portal-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+    font-size: .82rem;
+    line-height: 1.5;
+    font-weight: 600;
+  }
+  .portal-msg.error { background: rgba(240,78,104,.1); color: #d23c58; }
+  .portal-msg.success { background: rgba(22,185,161,.12); color: #12967f; }
+
+  .staff-card { width: min(640px, 100%); }
+  .staff-note {
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--line, rgba(20,55,100,.14));
+    border-radius: 14px;
+    background: rgba(22,137,254,.06);
+    color: var(--muted, rgba(16,33,59,.72));
+    font-size: .78rem;
+    line-height: 1.7;
+  }
+  .staff-note code {
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: rgba(16,33,59,.08);
+    color: var(--ink, #10213b);
+    font-size: .76rem;
+  }
+  html[data-theme="dark"] .staff-note code { background: rgba(255,255,255,.1); }
+
+  .file-drop {
+    margin-bottom: 16px;
+  }
+  .file-drop input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px dashed var(--line, rgba(20,55,100,.22));
+    border-radius: 14px;
+    background: rgba(255,255,255,.4);
+    color: var(--muted, rgba(16,33,59,.62));
+    font: 500 .82rem 'Manrope', sans-serif;
+  }
+  html[data-theme="dark"] .file-drop input[type="file"] { background: rgba(255,255,255,.05); }
+  .file-drop input[type="file"]::file-selector-button {
+    padding: 9px 14px;
+    margin-right: 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--ink, #10213b);
+    color: #fff;
+    font: 700 .76rem 'Manrope', sans-serif;
+    cursor: pointer;
+  }
+
+  #uploadStatus {
+    margin-top: 14px;
+    padding: 12px 14px;
+    min-height: 20px;
+    border-radius: 14px;
+    background: rgba(16,33,59,.05);
+    color: var(--ink, #10213b);
+    font-size: .8rem;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+  html[data-theme="dark"] #uploadStatus { background: rgba(255,255,255,.06); }
+  #uploadStatus:empty { display: none; }
+
+  .staff-greeting {
+    margin: 0 0 22px;
+    color: var(--muted, rgba(16,33,59,.62));
+    font-size: .84rem;
+  }
 </style>
 </head>
 <body>
+  <div class="page">
+    <header>
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <circle cx="13" cy="13" r="3" fill="currentColor"/>
+            <ellipse cx="13" cy="13" rx="11.5" ry="4.7" stroke="#46D9FF" stroke-width="1.2"/>
+            <ellipse cx="13" cy="13" rx="11.5" ry="4.7" stroke="#328BFF" stroke-width="1.2" transform="rotate(60 13 13)"/>
+            <ellipse cx="13" cy="13" rx="11.5" ry="4.7" stroke="#8F7BFF" stroke-width="1.2" transform="rotate(120 13 13)"/>
+          </svg>
+        </span>
+        MAGNUS
+      </a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="courses.html">Courses</a>
+        <a href="faculty.html">Faculty</a>
+        <a href="results.html">Results</a>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">☼</button>
+      </nav>
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <div class="mobile-menu" id="mobile-menu">
+        <a href="index.html">Home <span>↗</span></a>
+        <a href="about.html">About <span>↗</span></a>
+        <a href="courses.html">Courses <span>↗</span></a>
+        <a href="faculty.html">Faculty <span>↗</span></a>
+        <a href="results.html">Results <span>↗</span></a>
+        <button class="theme-toggle-mobile" type="button">Toggle theme <span>☼</span></button>
+      </div>
+    </header>
 
-<nav>
-  <a href="index.html">Home</a>
-  <a href="courses.html">Courses</a>
-  <a href="faculty.html">Faculty</a>
-  <a href="results.html">Results</a>
-  <a href="login.html">Student Portal</a>
-</nav>
+    <main class="portal-main">
+      <div class="kicker eyebrow">Student &amp; staff access</div>
+      <h1>Your marks, your <span class="gradient">progress.</span></h1>
+      <p class="portal-intro">Students sign in to track their scores after every test. Staff sign in to upload results for the class.</p>
 
-<div class="portal-wrap">
+      <div class="portal-layout">
 
-  <!-- AUTH FORM -->
-  <div id="authView" class="portal-card">
-    <h2 id="authTitle">Log In</h2>
-    <div id="authMsg"></div>
-    <div class="portal-field">
-      <label>Email</label>
-      <input type="email" id="emailInput" placeholder="you@example.com">
-    </div>
-    <div class="portal-field">
-      <label>Password</label>
-      <input type="password" id="passwordInput" placeholder="••••••••">
-    </div>
-    <div class="portal-field hidden" id="rollNumberField">
-      <label>Roll Number <span style="font-weight:400;">(students only — leave blank if you're staff)</span></label>
-      <input type="text" id="rollNumberInput" placeholder="e.g. 24BIO045">
-    </div>
-    <div class="portal-field hidden" id="fullNameField">
-      <label>Full Name</label>
-      <input type="text" id="fullNameInput" placeholder="Your full name">
-    </div>
-    <div class="portal-field hidden" id="classField">
-      <label>Class</label>
-      <input type="text" id="classInput" placeholder="e.g. 12th - Batch A">
-    </div>
-    <button class="portal-btn" id="authSubmitBtn">Log In</button>
-    <div class="portal-toggle">
-      <span id="toggleText">Don't have an account? <a id="toggleLink">Sign up</a></span>
-    </div>
+        <!-- AUTH FORM -->
+        <div id="authView" class="portal-wrap">
+          <div class="portal-card">
+            <h2 id="authTitle">Log In</h2>
+            <p class="portal-card-sub">Use the email and password you registered with.</p>
+            <div id="authMsg"></div>
+            <div class="portal-field">
+              <label>Email</label>
+              <input type="email" id="emailInput" placeholder="you@example.com">
+            </div>
+            <div class="portal-field">
+              <label>Password</label>
+              <input type="password" id="passwordInput" placeholder="••••••••">
+            </div>
+            <div class="portal-field hidden" id="rollNumberField">
+              <label>Roll Number <span>(students only — leave blank if you're staff)</span></label>
+              <input type="text" id="rollNumberInput" placeholder="e.g. 045">
+            </div>
+            <div class="portal-field hidden" id="fullNameField">
+              <label>Full Name</label>
+              <input type="text" id="fullNameInput" placeholder="Your full name">
+            </div>
+            <div class="portal-field hidden" id="classField">
+              <label>Class</label>
+              <input type="text" id="classInput" placeholder="e.g. 12th - Batch A">
+            </div>
+            <button class="portal-btn" id="authSubmitBtn">Log In</button>
+            <div class="portal-toggle">
+              <span id="toggleText">Don't have an account? <a id="toggleLink">Sign up</a></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOT REGISTERED VIEW -->
+        <div id="notRegisteredView" class="portal-wrap hidden">
+          <div class="portal-card">
+            <h2>Account not registered</h2>
+            <p class="portal-card-sub">Your email isn't on file as a student or staff member. Please contact the school office to be added, then log in again.</p>
+            <button class="portal-btn secondary" id="signOutBtn1">Sign Out</button>
+          </div>
+        </div>
+
+        <!-- STAFF DASHBOARD -->
+        <div id="staffView" class="portal-wrap staff-card hidden">
+          <div class="portal-card">
+            <h2>Staff Upload</h2>
+            <p class="staff-greeting" id="staffGreeting"></p>
+            <div class="staff-note">
+              Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, full_name, class, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. <code>exam_date</code> is required for every row. Leave a subject blank if the student didn't take it. If a roll number isn't already registered, it will be auto-created using <code>full_name</code> and <code>class</code> — <code>full_name</code> is required for any new roll number. If an entry for the same student/subject/exam/date already exists, you'll be asked to confirm before it's overwritten.
+            </div>
+            <div class="file-drop">
+              <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+            </div>
+            <button class="portal-btn" id="uploadBtn">Upload Marks</button>
+            <div id="uploadStatus"></div>
+            <button class="portal-btn secondary" id="signOutBtn3" style="margin-top:16px;">Sign Out</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer><span>© 2026 Magnus Academy. All rights reserved.</span><span>Made by <strong>Adithiyaa</strong></span></footer>
   </div>
-
-  <!-- NOT REGISTERED VIEW -->
-  <div id="notRegisteredView" class="portal-card hidden">
-    <h2>Account not registered</h2>
-    <p>Your email isn't on file as a student or staff member. Please contact the school office to be added, then log in again.</p>
-    <button class="portal-btn" id="signOutBtn1">Sign Out</button>
-  </div>
-
-  <!-- STAFF DASHBOARD -->
-  <div id="staffView" class="portal-card hidden">
-    <h2>Staff Upload</h2>
-    <p id="staffGreeting"></p>
-    <p style="font-size:0.9em;">Upload a CSV/Excel file with one row per student per exam, and columns: <code>roll_number, full_name, class, exam_name, exam_date, Physics, Physics Max, Chemistry, Chemistry Max, Maths, Maths Max, Biology, Biology Max</code>. <code>exam_date</code> is required for every row. Leave a subject blank if the student didn't take it. Each subject has its own max — e.g. NEET's Biology is usually worth more than Physics/Chemistry. If a roll number isn't already registered, it will be auto-created using the <code>full_name</code> and <code>class</code> columns — <code>full_name</code> is required for any new roll number. If an entry for the same student/subject/exam/date already exists, you'll be asked to confirm before it's overwritten.</p>
-    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-    <button class="portal-btn" id="uploadBtn" style="margin-top:12px;">Upload Marks</button>
-    <div id="uploadStatus"></div>
-    <button class="portal-btn" id="signOutBtn3" style="margin-top:20px;">Sign Out</button>
-  </div>
-
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="js/site.js"></script>
 <script>
 // ====== CONFIG: replace with your actual Supabase project values ======
 const SUPABASE_URL = "https://ahtfvmawujnpodjboiqo.supabase.co";
