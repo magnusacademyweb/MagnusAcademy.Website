@@ -181,6 +181,8 @@
     color: var(--muted, rgba(16,33,59,.62));
     font-size: .84rem;
   }
+
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -217,11 +219,7 @@
     </header>
 
     <main class="portal-main">
-      <div class="kicker eyebrow">Student &amp; staff access</div>
-      <h1>Your marks, your <span class="gradient">progress.</span></h1>
-      <p class="portal-intro">Students sign in to track their scores after every test. Staff sign in to upload results for the class.</p>
-
-      <div class="portal-layout">
+      <div class="portal-layout" style="margin-top: 40px;">
 
         <!-- AUTH FORM -->
         <div id="authView" class="portal-wrap">
