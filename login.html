@@ -365,6 +365,19 @@ function handleToggleClick() {
 toggleLink.addEventListener('click', handleToggleClick);
 
 authSubmitBtn.addEventListener('click', async () => {
+  if (authSubmitBtn.disabled) return; // already processing a click — ignore repeats
+  authSubmitBtn.disabled = true;
+  const originalLabel = authSubmitBtn.textContent;
+  authSubmitBtn.textContent = isSignup ? 'Signing up…' : 'Logging in…';
+  try {
+    await handleAuthSubmit();
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = originalLabel;
+  }
+});
+
+async function handleAuthSubmit() {
   const email = normalizeEmail(document.getElementById('emailInput').value);
   const password = document.getElementById('passwordInput').value;
   clearMsg();
@@ -444,7 +457,7 @@ authSubmitBtn.addEventListener('click', async () => {
     if (error) { showMsg(error.message, 'error'); return; }
     await routeAfterAuth(null); // no roll-number check on ordinary login, already verified at signup
   }
-});
+}
 
 async function routeAfterAuth(enteredRoll) {
   const { data: { user } } = await supabaseClient.auth.getUser();
