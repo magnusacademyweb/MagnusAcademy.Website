@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Portal — Marks</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -142,6 +147,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Same reasoning as login.html: ilike treats "_" and "%" as wildcards, so an email like
+// "john_doe@gmail.com" could match the wrong row. Normalize to lowercase and use .eq() instead.
+function normalizeEmail(raw) {
+  return String(raw).trim().toLowerCase();
+}
+
 let MARKS = [];
 const SUBJ_LABEL = {phy:'Physics', chem:'Chemistry', math:'Maths', bio:'Biology'};
 let activeFilter = 'all';
@@ -247,13 +258,13 @@ async function init(){
     return;
   }
 
-  const email = session.user.email;
+  const email = normalizeEmail(session.user.email);
 
   // Confirm this account is a registered student (RLS only returns their own row)
   const { data: studentRow, error: studentErr } = await supabaseClient
     .from('students')
     .select('*')
-    .ilike('email', email)
+    .eq('email', email)
     .maybeSingle();
 
   if (studentErr || !studentRow) {
