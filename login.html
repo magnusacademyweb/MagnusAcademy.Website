@@ -388,13 +388,16 @@ authSubmitBtn.addEventListener('click', async () => {
       // may have already created this roll_number with no email yet.
       if (!enteredName) { showMsg('Please enter your full name.', 'error'); return; }
 
-      const { data: existing } = await supabaseClient
-        .from('students')
-        .select('email')
-        .eq('roll_number', enteredRoll)
-        .maybeSingle();
+      const { data: alreadyClaimed, error: claimCheckError } = await supabaseClient
+        .rpc('roll_number_is_claimed', { p_roll_number: enteredRoll });
 
-      if (existing && existing.email) {
+      if (claimCheckError) {
+        showMsg('Could not verify that roll number: ' + claimCheckError.message, 'error');
+        await supabaseClient.auth.signOut();
+        return;
+      }
+
+      if (alreadyClaimed) {
         showMsg('That roll number is already registered. If this is a mistake, contact the office.', 'error');
         await supabaseClient.auth.signOut();
         return;
