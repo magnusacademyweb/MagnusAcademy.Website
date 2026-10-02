@@ -68,7 +68,8 @@
    ========================================================= */
 (function typeHeadline(){
   const el = document.getElementById('headline');
-  const lines = ["Precision coaching for", "JEE & NEET achievers", "Magnus Academy"];
+  el.textContent = '';
+  const lines = ["Precision JEE & NEET", "coaching in Hosur"];
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let globalIndex = 0;
 
