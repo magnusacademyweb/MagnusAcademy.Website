@@ -108,9 +108,11 @@
 /* =========================================================
    Background particle field (adapted from LuminousFieldHero)
    ========================================================= */
-(function particleField(){
+function initParticles(){
   if(typeof THREE === 'undefined'){ return; }
   const canvas = document.getElementById('particle-canvas');
+  canvas.style.opacity = '0';
+  canvas.style.transition = 'opacity 1.2s ease';
   const container = canvas.parentElement;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -251,4 +253,22 @@
 
   resize();
   animate();
+  requestAnimationFrame(() => { canvas.style.opacity = '1'; });
+}
+
+/* Load three.js only after the page has finished loading, so the text,
+   headline and buttons appear first. The animation then fades in. */
+(function loadParticlesLater(){
+  function loadThree(){
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    script.onload = initParticles;
+    document.head.appendChild(script);
+  }
+  function schedule(){
+    if('requestIdleCallback' in window){ requestIdleCallback(loadThree, { timeout: 2000 }); }
+    else { setTimeout(loadThree, 300); }
+  }
+  if(document.readyState === 'complete'){ schedule(); }
+  else { window.addEventListener('load', schedule); }
 })();
