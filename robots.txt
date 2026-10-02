@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /login.html
+Disallow: /student-portal.html
+
+Sitemap: https://magnusacademy.in/sitemap.xml
