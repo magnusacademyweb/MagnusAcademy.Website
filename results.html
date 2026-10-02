@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Results — Magnus Academy</title>
+  <title>JEE &amp; NEET Results 2024–2026 | Magnus Academy, Hosur</title>
+  <meta name="description" content="JEE and NEET results of Magnus Academy students in Hosur, with selections at Stanley Medical College, IIT Madras BS programme, IIIT Kottayam, PES Bangalore, PSG Coimbatore, VIT and more.">
+  <link rel="canonical" href="https://magnusacademy.in/results.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JEE &amp; NEET Results | Magnus Academy, Hosur">
+  <meta property="og:description" content="See JEE and NEET scores and college selections of Magnus Academy students from 2024 to 2026.">
+  <meta property="og:url" content="https://magnusacademy.in/results.html">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
   <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
@@ -44,6 +50,9 @@
     .result-fact { display:block; }
     .result-quote { margin:0 0 22px; color:var(--muted); font-size:.72rem; line-height:1.55; font-style:italic; }
     .empty-results { grid-column:1/-1; padding:35px 20px; border:1px dashed var(--line); border-radius:20px; color:var(--muted); text-align:center; font-size:.8rem; }
+    .selections { margin-top:64px; padding-top:40px; border-top:1px solid var(--line); }
+    .selections h2 { margin:12px 0 14px; font-size:clamp(1.6rem,3vw,2.2rem); line-height:1.08; letter-spacing:-.045em; }
+    .selections p { max-width:760px; margin:0 0 12px; color:var(--muted); font-size:.86rem; line-height:1.75; }
     @media(max-width:1050px) { .result-list{grid-template-columns:repeat(2,minmax(0,1fr))} }
     @media(max-width:760px) {
       .results-browser { margin-top:44px; }
@@ -55,6 +64,7 @@
       .result-list { grid-template-columns:1fr; gap:12px; margin-top:22px; }
       .result-card { padding:16px; }
       .result-name { margin-top:22px; }
+      .selections { margin-top:48px; padding-top:32px; }
     }
   </style>
 </head>
@@ -69,7 +79,7 @@
     <main>
       <div class="kicker eyebrow">2 Years of Excellence · Hosur</div>
       <h1>Results that make<br /><span class="gradient">progress visible.</span></h1>
-      <p class="results-intro">Explore Magnus Academy results across NEET, IIT, Foundation, and Boards. Choose a year and exam to see each student's outcome.</p>
+      <p class="results-intro">Explore Magnus Academy's JEE and NEET results in Hosur. Choose a year and exam to see each student's score and college selection.</p>
 
       <section class="results-browser" aria-label="Browse Magnus results">
         <div class="browser-label">1. Select year</div>
@@ -95,6 +105,13 @@
           <div class="results-count" id="results-count">3 result slots</div>
         </div>
         <div class="result-list" id="result-list" aria-live="polite"></div>
+      </section>
+
+      <section class="selections" aria-labelledby="selections-title">
+        <div class="eyebrow">Selections at a glance</div>
+        <h2 id="selections-title">Where Magnus Academy students from Hosur have gone</h2>
+        <p><strong>NEET:</strong> Magnus students have secured seats at Stanley Medical College (Venu P), Mamtha Medical College (Pujithaa M R) and St Peters Medical College (Karthiga R), and a government BSMS (Siddha) seat (Magathi).</p>
+        <p><strong>JEE:</strong> Selections include the IIT Madras BSMS programme (Aryan Raj), IIIT Kottayam CSE (Christfin Felix), PES Bangalore CSE (Spurthi), PSG Coimbatore Computational Finance (Sreelakshmi), VIT Category 1 and SNU (Raghavi), with IISER selections as well.</p>
       </section>
 
     </main>
@@ -159,7 +176,7 @@
             : "No result slots yet";
 
         if (!yearResults.length) {
-          resultList.innerHTML = '<div class="empty-results">NEET results for 2026 will be added here when they are available.</div>';
+          resultList.innerHTML = `<div class="empty-results">${examName} results for ${selectedYear} will be added here when they are available.</div>`;
           return;
         }
 
